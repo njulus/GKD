@@ -76,7 +76,7 @@ class MyDataset(Dataset):
         return image, label
 
     def get_n_classes(self):
-        assert len(np.unique(self.labels)) == 50
+        assert(len(np.unique(self.labels)) == 50)
         return 50
 
 
