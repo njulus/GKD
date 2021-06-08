@@ -28,14 +28,13 @@ import os
 def display_args(args):
     print('===== task arguments =====')
     print('data_name = %s' % (args.data_name))
+    print('n_new_classes = %d' % (args.n_new_classes))
     print('teacher_network_name = %s' % (args.teacher_network_name))
     print('student_network_name = %s' % (args.student_network_name))
     print('===== experiment environment arguments =====')
     print('devices = %s' % (str(args.devices)))
     print('flag_debug = %r' % (args.flag_debug))
-    print('flag_no_bar = %r' % (args.flag_no_bar))
     print('n_workers = %d' % (args.n_workers))
-    print('flag_tuning = %r' % (args.flag_tuning))
     print('===== optimizer arguments =====')
     print('lr1 = %f' % (args.lr1))
     print('lr2 = %f' % (args.lr2))
@@ -71,14 +70,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # task arguments
     parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
+    parser.add_argument('--n_new_classes', type=int, default=0)
     parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
     parser.add_argument('--flag_debug', action='store_true', default=False)
-    parser.add_argument('--flag_no_bar', action='store_true', default=False)
     parser.add_argument('--n_workers', type=int, default=GV.WORKERS)
-    parser.add_argument('--flag_tuning', action='store_true', default=False)
     # optimizer arguments
     parser.add_argument('--lr1', type=float, default=0.1)
     parser.add_argument('--lr2', type=float, default=0.1)
@@ -92,12 +90,11 @@ if __name__ == '__main__':
     parser.add_argument('--ca', type=float, default=0.25)  # channel
     parser.add_argument('--dropout_rate', type=float, default=0.3)
     # training procedure arguments
-    parser.add_argument('--n_training_epochs1', type=int, default=200)
-    parser.add_argument('--n_training_epochs2', type=int, default=200)
-    parser.add_argument('--batch_size', type=int, default=128)  # training batch size
-    parser.add_argument('--flag_merge', action='store_true', default=False)
-    parser.add_argument('--tau1', type=float, default=4) # temperature for stochastic triplet embedding in stage 1
-    parser.add_argument('--tau2', type=float, default=2) # temperature for local distillation in stage 2
+    parser.add_argument('--n_training_epochs1', type=int, default=100)
+    parser.add_argument('--n_training_epochs2', type=int, default=100)
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--tau1', type=float, default=4) # temperature in stage 1s
+    parser.add_argument('--tau2', type=float, default=2) # temperature in stage 2
     parser.add_argument('--lambd', type=float, default=100) # weight of teaching loss in stage 2
 
     args = parser.parse_args()
@@ -105,17 +102,20 @@ if __name__ == '__main__':
     display_args(args)
 
     data_path = 'datasets/' + args.data_name + '/'
+    if args.data_name == 'CIFAR-100':
+        assert(args.n_new_classes <= 50)
+    elif args.data_name == 'CUB-200':
+        assert(args.n_new_classes <= 100)
 
     # import modules
     Data = importlib.import_module('dataloaders.' + args.data_name)
-    Network = importlib.import_module('networks.' + args.student_network_name)
+    Network_Teacher = importlib.import_module('networks.' + args.teacher_network_name)
+    Network_Student = importlib.import_module('networks.' + args.student_network_name)
 
     # generate data_loader
-    train_data_loader = Data.generate_data_loader(data_path, 'train', args.flag_tuning, args.batch_size, args.n_workers)
+    train_data_loader = Data.generate_data_loader(data_path, 'train', args.n_new_classes, args.batch_size, args.n_workers)
     args.number_of_classes = train_data_loader.dataset.get_n_classes()
     print('===== train data loader ready. =====')
-    validate_data_loader = Data.generate_data_loader(data_path, 'val', args.flag_tuning, args.batch_size, args.n_workers)
-    print('===== validate data loader ready. =====')
     test_data_loader = Data.generate_data_loader(data_path, 'test', args.flag_tuning, args.batch_size, args.n_workers)
     print('===== test data loader ready. =====')
 

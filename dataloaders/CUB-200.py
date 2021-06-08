@@ -20,7 +20,7 @@ class MyDataset(Dataset):
         super(MyDataset, self).__init__()
         self.data_path = data_path
         self.flag_mode = flag_mode
-        self.flag_tuning = flag_tuning
+        self.n_new_classes = n_new_classes
 
         self.features, self.labels = self.read_data()
 
