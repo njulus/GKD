@@ -54,6 +54,16 @@ class MyDataset(Dataset):
         features_needed = features[indexes_needed]
         labels_needed = labels[indexes_needed]
 
+        self.label2y = {}
+        current_y = 0
+        label_table = np.sort(np.unique(labels_needed))
+        for label in label_table:
+            if label in self.label2y.keys():
+                continue
+            else:
+                self.label2y[label] = current_y
+                current_y += 1
+
         return features_needed, labels_needed
 
     def __len__(self):
@@ -73,7 +83,8 @@ class MyDataset(Dataset):
         else:
             image = self.transform_simple(image)
         label = self.labels[index]
-        return image, label
+        y = self.label2y[label]
+        return image, y
 
     def get_n_classes(self):
         assert(len(np.unique(self.labels)) == 50)

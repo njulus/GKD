@@ -75,7 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--ca', type=float, default=1)  # channel
     parser.add_argument('--dropout_rate', type=float, default=0.3)
     # training procedure arguments
-    parser.add_argument('--n_training_epochs', type=int, default=200)
+    parser.add_argument('--n_training_epochs', type=int, default=3)
     parser.add_argument('--batch_size', type=int, default=128)
 
     args = parser.parse_args()
@@ -143,4 +143,4 @@ if __name__ == '__main__':
         record = torch.load(model_save_path)
         best_testing_accuracy = record['testing_accuracy']
         network.load_state_dict(record['state_dict'])
-        print('===== best model loaded, testing acc = %f. =====' % (record['validating_accuracy']))
+        print('===== best model loaded, testing acc = %f. =====' % (record['testing_accuracy']))

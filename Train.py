@@ -43,11 +43,8 @@ def pretrain(args, train_data_loader, test_data_loader, network, model_save_path
             images = images.float().cuda(args.devices[0])
             labels = labels.long().cuda(args.devices[0])
 
-            print(labels)
             logits = network.forward(images)
-            print(logits.size())
             loss_value = loss_function(logits, labels)
-            print(loss_value)
 
             optimizer.zero_grad()
             loss_value.backward()
@@ -74,7 +71,7 @@ def pretrain(args, train_data_loader, test_data_loader, network, model_save_path
                 best_testing_accuracy = testing_accuracy
                 record = {
                     'state_dict': network.state_dict(),
-                    'validating_accuracy': testing_accuracy,
+                    'testing_accuracy': testing_accuracy,
                     'epoch': epoch
                 }
                 torch.save(record, model_save_path)
