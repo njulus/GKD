@@ -86,8 +86,88 @@ def pretrain(args, train_data_loader, test_data_loader, network, model_save_path
 
 
 def train_stage1(args, train_data_loader, test_data_loader, teacher, student, model_save_path1):
-    # TODO
-    return
+    loss_function = nn.KLDivLoss(reduction='none')
+    optimizer = SGD(params=student.parameters(), lr=args.lr1, weight_decay=args.wd,
+        momentum=args.mo, nesterov=True)
+    scheduler = CosineAnnealingLR(optimizer, args.n_training_epochs1, 0.1 * args.lr1)
+    miner = TripletMarginMiner(margin=0.2, type_of_triplets='semihard')
+
+    training_loss_list1 = []
+    testing_accuracy_list1 = []
+    best_testing_accuracy = 0
+
+    for epoch in range(1, args.n_training_epochs1 + 1):
+        training_loss = 0
+        n_tuples = 0
+
+        student.train()
+        for batch_index, batch in enumerate(train_data_loader):
+            images, labels = batch
+            images = images.float().cuda(args.devices[0])
+            labels = labels.long().cuda(args.devices[0])
+
+            with torch.no_grad():
+                teacher_embeddings = teacher.forward(images, flag_embedding=True)
+                teacher_embeddings = F.normalize(teacher_embeddings, p=2, dim=1)
+            
+            student_embeddings = student.forward(images, flag_embedding=True)
+            student_embeddings = F.normalize(student_embeddings, p=2, dim=1)
+
+            with torch.no_grad():
+                anchor_id, positive_id, negative_id = miner(student_embeddings, labels)
+                merged_anchor_id, merged_positive_id, merged_negative_id, mask = \
+                    merge(args, anchor_id, positive_id, negative_id)
+
+            teacher_anchor = teacher_embeddings[merged_anchor_id]
+            teacher_positive = teacher_embeddings[merged_positive_id]
+            teacher_negative = teacher_embeddings[merged_negative_id]
+
+            student_anchor = student_embeddings[merged_anchor_id]
+            student_positive = student_embeddings[merged_positive_id]
+            student_negative = student_embeddings[merged_negative_id]
+
+            teacher_ap_dist = torch.norm(teacher_anchor - teacher_positive, p=2, dim=1)
+            teacher_an_dist = torch.masked_fill(torch.norm(teacher_anchor.unsqueeze(1) - teacher_negative, p=2, dim=2), mask == 0, 1e9)
+
+            student_ap_dist = torch.norm(student_anchor - student_positive, p=2, dim=1)
+            student_an_dist = torch.masked_fill(torch.norm(student_anchor.unsqueeze(1) - student_negative, p=2, dim=2), mask == 0, 1e9)
+
+            teacher_tuple_logits = torch.cat([-teacher_ap_dist.unsqueeze(1), -teacher_an_dist], dim=1) / args.tau1
+
+            student_tuple_logits = torch.cat([-student_ap_dist.unsqueeze(1), -student_an_dist], dim=1) / args.tau1
+
+            loss_value = 1000 * loss_function(F.log_softmax(student_tuple_logits), F.softmax(teacher_tuple_logits))
+            loss_value = torch.mean(torch.sum(loss_value, dim=1))
+        
+            optimizer.zero_grad()
+            loss_value.backward()
+            optimizer.step()
+
+            training_loss += loss_value.cpu().item() * student_tuple_logits.size()[0]
+            n_tuples += student_tuple_logits.size()[0]
+        
+        training_loss /= n_tuples
+        training_loss_list1.append(training_loss)
+
+        if epoch % 10 == 0:
+            testing_accuracy = test_ncm(args, train_data_loader, test_data_loader, student)
+            testing_accuracy_list1.append(testing_accuracy)
+
+            print('epoch %d finish: training_loss = %f, testing_accuracy = %f' % (epoch, training_loss, testing_accuracy))
+
+            if not args.flag_debug:
+                if testing_accuracy > best_testing_accuracy:
+                    best_testing_accuracy = testing_accuracy
+                    record = {
+                        'state_dict': student.state_dict(),
+                        'testing_accuracy': testing_accuracy,
+                        'epoch': epoch
+                    }
+                    torch.save(record, model_save_path1)
+        else:
+            print('epoch %d finish: training_loss = %f' % (epoch, training_loss))
+    
+    return training_loss_list1, testing_accuracy_list1
 
 
 
@@ -95,7 +175,7 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
     training_loss_function = nn.CrossEntropyLoss()
     teaching_loss_function = nn.KLDivLoss(reduction='batchmean')
     optimizer = SGD(params=student.parameters(), lr=args.lr2, weight_decay=args.wd,
-                    momentum=args.mo, nesterov=True)
+        momentum=args.mo, nesterov=True)
     if args.gamma != -1:
         scheduler = MultiStepLR(optimizer, args.point, args.gamma)
     else:
