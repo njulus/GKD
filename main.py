@@ -93,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('--dropout_rate', type=float, default=0.3)
     # training procedure arguments
     parser.add_argument('--n_training_epochs1', type=int, default=100)
-    parser.add_argument('--n_training_epochs2', type=int, default=100)
+    parser.add_argument('--n_training_epochs2', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--tau1', type=float, default=4) # temperature in stage 1
     parser.add_argument('--tau2', type=float, default=2) # temperature in stage 2
@@ -146,7 +146,9 @@ if __name__ == '__main__':
             teacher = torch.nn.DataParallel(teacher, device_ids=args.devices)
         # set teacher to evaluation mode
         teacher.eval()
-        print('===== teacher ready. =====')
+    else:
+        teacher = None
+    print('===== teacher ready. =====')
 
     # generate student network
     student = Network_Student.MyNetwork(args)
@@ -158,7 +160,7 @@ if __name__ == '__main__':
     if args.model_name == 'gkd':
         # model save path and statistics save path for stage 1
         model_save_path1 = 'saves/trained_students/' + \
-                            args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
+                            args.data_name + '_' + args.model_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
                             '_class=' + str(args.n_classes) + \
                             '_newclass=' + str(args.n_new_classes) + \
                             '_lr1=' + str(args.lr1) + \
@@ -170,7 +172,7 @@ if __name__ == '__main__':
                             '_tau1=' + str(args.tau1) + \
                             '.model'
         statistics_save_path1 = 'saves/student_statistics/' + \
-                                args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
+                                args.data_name + '_' + args.model_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
                                 '_class=' + str(args.n_classes) + \
                                 '_newclass=' + str(args.n_new_classes) + \
                                 '_lr1=' + str(args.lr1) + \
@@ -210,7 +212,7 @@ if __name__ == '__main__':
 
     # model save path and statistics save path for stage 2
     model_save_path2 = 'saves/trained_students/' + \
-                        args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
+                        args.data_name + '_' + args.model_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
                         '_class=' + str(args.n_classes) + \
                         '_newclass=' + str(args.n_new_classes) + \
                         '_lr2=' + str(args.lr2) + \
@@ -225,7 +227,7 @@ if __name__ == '__main__':
                         '_lambd=' + str(args.lambd) + \
                         '.model'
     statistics_save_path2 = 'saves/student_statistics/' + \
-                            args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
+                            args.data_name + '_' + args.model_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
                             '_class=' + str(args.n_classes) + \
                             '_newclass=' + str(args.n_new_classes) + \
                             '_lr2=' + str(args.lr2) + \
@@ -263,3 +265,5 @@ if __name__ == '__main__':
         best_testing_accuracy = record['testing_accuracy']
         student.load_state_dict(record['state_dict'])
         print('===== best model in stage 2 loaded, testing acc = %f. =====' % (record['testing_accuracy']))
+    
+    display_args(args)

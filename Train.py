@@ -99,7 +99,7 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
     if args.gamma != -1:
         scheduler = MultiStepLR(optimizer, args.point, args.gamma)
     else:
-        scheduler = CosineAnnealingLR(optimizer, args.n_training_epochs, 0.001 * args.lr2)
+        scheduler = CosineAnnealingLR(optimizer, args.n_training_epochs2, 0.001 * args.lr2)
     
     training_loss_list2 = []
     teaching_loss_list2 = []
@@ -116,25 +116,24 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
         for batch_index, batch in enumerate(train_data_loader):
             images, labels = batch
             images = images.float().cuda(args.devices[0])
-            labels = labels.float().cuda(args.devices[0])
+            labels = labels.long().cuda(args.devices[0])
 
             logits = student.forward(images)
             training_loss_value = training_loss_function(logits, labels)
 
             if args.model_name == 'ce':
-                pass
+                total_loss_value = training_loss_value
             elif args.model_name == 'kd':
                 with torch.no_grad():
                     teacher_logits = teacher.forward(images)
-                    teaching_loss_value = args.lambd * teaching_loss_function(
-                        F.log_softmax(logits / args.tau2, dim=1),
-                        F.softmax(teacher_logits / args.tau2, dim=1)
-                    )
+                teaching_loss_value = args.lambd * teaching_loss_function(
+                    F.log_softmax(logits / args.tau2, dim=1),
+                    F.softmax(teacher_logits / args.tau2, dim=1)
+                )
+                total_loss_value = training_loss_value + teaching_loss_value
             elif args.model_name == 'gkd':
                 # TODO
                 pass
-
-            total_loss_value = training_loss_value + teaching_loss_value
 
             optimizer.zero_grad()
             total_loss_value.backward()
@@ -174,4 +173,4 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
 
         scheduler.step()
 
-        return training_loss_list2, teaching_loss_list2, training_accuracy_list2, testing_accuracy_list2
+    return training_loss_list2, teaching_loss_list2, training_accuracy_list2, testing_accuracy_list2
