@@ -72,7 +72,7 @@ class MyNetwork(nn.Module):
         super(MyNetwork, self).__init__()
         self.args = args
         depth = args.depth
-        number_of_classes = args.number_of_classes
+        number_of_classes = args.n_classes
 
         # depth must be of form (6n + 2)
         # number of convolutional layers in a basic block = 2

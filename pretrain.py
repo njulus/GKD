@@ -92,7 +92,6 @@ if __name__ == '__main__':
 
     # generate data_loader
     train_data_loader = Data.generate_data_loader(data_path, 'train', args.n_classes, args.n_new_classes, args.batch_size, args.n_workers)
-    args.number_of_classes = train_data_loader.dataset.get_n_classes()
     print('===== train data loader ready. =====')
     test_data_loader = Data.generate_data_loader(data_path, 'test', args.n_classes, args.n_new_classes, args.batch_size, args.n_workers)
     print('===== test data loader ready. =====')
@@ -106,6 +105,8 @@ if __name__ == '__main__':
 
     model_save_path = 'saves/pretrained_teachers/' + \
                         args.data_name + '_' + args.network_name + \
+                        '_class=' + str(args.n_classes) + \
+                        '_newclass=' + str(args.n_new_classes) + \
                         '_lr=' + str(args.lr) + \
                         '_point=' + str(args.point) + \
                         '_gamma=' + str(args.gamma) + \
@@ -114,6 +115,8 @@ if __name__ == '__main__':
                         '.model'
     statistics_save_path = 'saves/teacher_statistics/' + \
                                         args.data_name + '_' + args.network_name + \
+                                        '_class=' + str(args.n_classes) + \
+                                        '_newclass=' + str(args.n_new_classes) + \
                                         '_lr=' + str(args.lr) + \
                                         '_point=' + str(args.point) + \
                                         '_gamma=' + str(args.gamma) + \

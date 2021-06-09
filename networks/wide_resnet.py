@@ -65,7 +65,7 @@ class MyNetwork(nn.Module):
         self.args = args
         depth = args.depth
         width = args.width
-        number_of_classes = args.number_of_classes
+        number_of_classes = args.n_classes
         dropout_rate = args.dropout_rate
 
         # depth must be of form (6n + 4)

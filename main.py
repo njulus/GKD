@@ -27,6 +27,7 @@ import os
 def display_args(args):
     print('===== task arguments =====')
     print('data_name = %s' % (args.data_name))
+    print('n_classes = %d' % (args.n_classes))
     print('n_new_classes = %d' % (args.n_new_classes))
     print('teacher_network_name = %s' % (args.teacher_network_name))
     print('student_network_name = %s' % (args.student_network_name))
@@ -69,6 +70,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # task arguments
     parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
+    parser.add_argument('--n_classes', type=int, default=50)
     parser.add_argument('--n_new_classes', type=int, default=0)
     parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
@@ -103,8 +105,10 @@ if __name__ == '__main__':
 
     data_path = 'datasets/' + args.data_name + '/'
     if args.data_name == 'CIFAR-100':
+        assert(args.n_classes <= 100)
         assert(args.n_new_classes <= 50)
     elif args.data_name == 'CUB-200':
+        assert(args.n_classes <= 200)
         assert(args.n_new_classes <= 100)
 
     # import modules
@@ -113,10 +117,9 @@ if __name__ == '__main__':
     Network_Student = importlib.import_module('networks.' + args.student_network_name)
 
     # generate data_loader
-    train_data_loader = Data.generate_data_loader(data_path, 'train', args.n_new_classes, args.batch_size, args.n_workers)
-    args.number_of_classes = train_data_loader.dataset.get_n_classes()
+    train_data_loader = Data.generate_data_loader(data_path, 'train', args.n_classes, args.n_new_classes, args.batch_size, args.n_workers)
     print('===== train data loader ready. =====')
-    test_data_loader = Data.generate_data_loader(data_path, 'test', args.n_new_classes, args.batch_size, args.n_workers)
+    test_data_loader = Data.generate_data_loader(data_path, 'test', args.n_classes, args.n_new_classes, args.batch_size, args.n_workers)
     print('===== test data loader ready. =====')
 
     # generate teacher network
@@ -156,6 +159,8 @@ if __name__ == '__main__':
         # model save path and statistics save path for stage 1
         model_save_path1 = 'saves/trained_students/' + \
                             args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
+                            '_class=' + str(args.n_classes) + \
+                            '_newclass=' + str(args.n_new_classes) + \
                             '_lr1=' + str(args.lr1) + \
                             '_wd=' + str(args.wd) + \
                             '_mo=' + str(args.mo) + \
@@ -166,6 +171,8 @@ if __name__ == '__main__':
                             '.model'
         statistics_save_path1 = 'saves/student_statistics/' + \
                                 args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
+                                '_class=' + str(args.n_classes) + \
+                                '_newclass=' + str(args.n_new_classes) + \
                                 '_lr1=' + str(args.lr1) + \
                                 '_wd=' + str(args.wd) + \
                                 '_mo=' + str(args.mo) + \
@@ -204,6 +211,8 @@ if __name__ == '__main__':
     # model save path and statistics save path for stage 2
     model_save_path2 = 'saves/trained_students/' + \
                         args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
+                        '_class=' + str(args.n_classes) + \
+                        '_newclass=' + str(args.n_new_classes) + \
                         '_lr2=' + str(args.lr2) + \
                         '_point=' + str(args.point) + \
                         '_gamma=' + str(args.gamma) + \
@@ -217,6 +226,8 @@ if __name__ == '__main__':
                         '.model'
     statistics_save_path2 = 'saves/student_statistics/' + \
                             args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
+                            '_class=' + str(args.n_classes) + \
+                            '_newclass=' + str(args.n_new_classes) + \
                             '_lr2=' + str(args.lr2) + \
                             '_point=' + str(args.point) + \
                             '_gamma=' + str(args.gamma) + \

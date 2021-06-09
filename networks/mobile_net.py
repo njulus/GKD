@@ -50,7 +50,7 @@ class MyNetwork(nn.Module):
         self.args = args
         self.flag_general = flag_general
         ca = args.ca
-        number_of_classes = args.number_of_classes
+        number_of_classes = args.n_classes
         self.cfg = [64, (128, 2), 128, (256, 2), 256, (512, 2), 512, 512, 512, 512, 512, (1024, 2), 1024]
         for i in range(0, len(self.cfg)):
             if isinstance(self.cfg[i], int):
