@@ -75,7 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--ca', type=float, default=1)  # channel
     parser.add_argument('--dropout_rate', type=float, default=0.3)
     # training procedure arguments
-    parser.add_argument('--n_training_epochs', type=int, default=3)
+    parser.add_argument('--n_training_epochs', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=128)
 
     args = parser.parse_args()

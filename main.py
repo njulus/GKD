@@ -31,6 +31,7 @@ def display_args(args):
     print('n_new_classes = %d' % (args.n_new_classes))
     print('teacher_network_name = %s' % (args.teacher_network_name))
     print('student_network_name = %s' % (args.student_network_name))
+    print('model_name = %s' % (args.model_name))
     print('===== experiment environment arguments =====')
     print('devices = %s' % (str(args.devices)))
     print('flag_debug = %r' % (args.flag_debug))
@@ -51,7 +52,6 @@ def display_args(args):
     print('n_training_epochs1 = %d' % (args.n_training_epochs1))
     print('n_training_epochs2 = %d' % (args.n_training_epochs2))
     print('batch_size = %d' % (args.batch_size))
-    print('flag_merge = %r' % (args.flag_merge))
     print('tau1 = %f' % (args.tau1))
     print('tau2 = %f' % (args.tau2))
     print('lambd = %f' % (args.lambd))
@@ -73,6 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_new_classes', type=int, default=0)
     parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--model_name', type=str, default='ce', choices=['ce', 'kd', 'gkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
     parser.add_argument('--flag_debug', action='store_true', default=False)
@@ -80,7 +81,7 @@ if __name__ == '__main__':
     # optimizer arguments
     parser.add_argument('--lr1', type=float, default=0.1)
     parser.add_argument('--lr2', type=float, default=0.1)
-    parser.add_argument('--point', type=int, nargs='+', default=(100,140,180))
+    parser.add_argument('--point', type=int, nargs='+', default=(50,100,150))
     parser.add_argument('--gamma', type=float, default=0.2)
     parser.add_argument('--wd', type=float, default=0.0005)  # weight decay
     parser.add_argument('--mo', type=float, default=0.9)  # momentum
@@ -93,7 +94,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_training_epochs1', type=int, default=100)
     parser.add_argument('--n_training_epochs2', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--tau1', type=float, default=4) # temperature in stage 1s
+    parser.add_argument('--tau1', type=float, default=4) # temperature in stage 1
     parser.add_argument('--tau2', type=float, default=2) # temperature in stage 2
     parser.add_argument('--lambd', type=float, default=100) # weight of teaching loss in stage 2
 
@@ -116,98 +117,94 @@ if __name__ == '__main__':
     train_data_loader = Data.generate_data_loader(data_path, 'train', args.n_new_classes, args.batch_size, args.n_workers)
     args.number_of_classes = train_data_loader.dataset.get_n_classes()
     print('===== train data loader ready. =====')
-    test_data_loader = Data.generate_data_loader(data_path, 'test', args.flag_tuning, args.batch_size, args.n_workers)
+    test_data_loader = Data.generate_data_loader(data_path, 'test', args.n_new_classes, args.batch_size, args.n_workers)
     print('===== test data loader ready. =====')
 
     # generate teacher network
-    if args.teacher_network_name == 'resnet':
-        teacher_args = copy.copy(args)
-        teacher_args.depth = 110
-        teacher = resnet.MyNetwork(teacher_args)
-        pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_resnet_teacher.model'
-    elif args.teacher_network_name == 'wide_resnet':
-        teacher_args = copy.copy(args)
-        teacher_args.depth, teacher_args.width = 40, 2
-        teacher = wide_resnet.MyNetwork(teacher_args)
-        pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_wide_resnet_teacher.model'
-    elif args.teacher_network_name == 'mobile_net':
-        teacher_args = copy.copy(args)
-        teacher_args.ca = 1.0
-        teacher = mobile_net.MyNetwork(teacher_args)
-        pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_mobile_net_teacher.model'
-    record = torch.load(pretrained_teacher_save_path, map_location='cpu')
-    teacher.load_state_dict(record['state_dict'])
-    teacher = teacher.cuda(args.devices[0])
-    if len(args.devices) > 1:
-        teacher = torch.nn.DataParallel(teacher, device_ids=args.devices)
-    # set teacher to evaluation mode
-    teacher.eval()
-    print('===== teacher ready. =====')
+    if args.model_name != 'ce':
+        if args.teacher_network_name == 'resnet':
+            teacher_args = copy.copy(args)
+            teacher_args.depth = 110
+            teacher = Network_Teacher.MyNetwork(teacher_args)
+            pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_resnet_teacher.model'
+        elif args.teacher_network_name == 'wide_resnet':
+            teacher_args = copy.copy(args)
+            teacher_args.depth, teacher_args.width = 40, 2
+            teacher = Network_Teacher.MyNetwork(teacher_args)
+            pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_wide_resnet_teacher.model'
+        elif args.teacher_network_name == 'mobile_net':
+            teacher_args = copy.copy(args)
+            teacher_args.ca = 1.0
+            teacher = Network_Teacher.MyNetwork(teacher_args)
+            pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_mobile_net_teacher.model'
+        record = torch.load(pretrained_teacher_save_path, map_location='cpu')
+        teacher.load_state_dict(record['state_dict'])
+        teacher = teacher.cuda(args.devices[0])
+        if len(args.devices) > 1:
+            teacher = torch.nn.DataParallel(teacher, device_ids=args.devices)
+        # set teacher to evaluation mode
+        teacher.eval()
+        print('===== teacher ready. =====')
 
     # generate student network
-    student = Network.MyNetwork(args)
+    student = Network_Student.MyNetwork(args)
     student = student.cuda(args.devices[0])
     if len(args.devices) > 1:
         student = torch.nn.DataParallel(student, device_ids=args.devices)
     print('===== student ready. =====')
 
-    # model save path and statistics save path for stage 1
-    model_save_path1 = 'saves/trained_students/' + \
-                        args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
-                        '_lr1=' + str(args.lr1) + \
-                        '_wd=' + str(args.wd) + \
-                        '_mo=' + str(args.mo) + \
-                        '_depth=' + str(args.depth) + \
-                        '_width=' + str(args.width) + \
-                        '_ca=' + str(args.ca) + \
-                        '_dropout=' + str(args.dropout_rate) + \
-                        '_batch=' + str(args.batch_size) + \
-                        '_merge=' + str(args.flag_merge) + \
-                        '_tau1=' + str(args.tau1) + \
-                        '.model'
-    statistics_save_path1 = 'saves/student_statistics/' + \
-                            args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
+    if args.model_name == 'gkd':
+        # model save path and statistics save path for stage 1
+        model_save_path1 = 'saves/trained_students/' + \
+                            args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
                             '_lr1=' + str(args.lr1) + \
                             '_wd=' + str(args.wd) + \
                             '_mo=' + str(args.mo) + \
                             '_depth=' + str(args.depth) + \
                             '_width=' + str(args.width) + \
                             '_ca=' + str(args.ca) + \
-                            '_dropout=' + str(args.dropout_rate) + \
-                            '_batch=' + str(args.batch_size) + \
-                            '_merge=' + str(args.flag_merge) + \
                             '_tau1=' + str(args.tau1) + \
-                            '.stat'
+                            '.model'
+        statistics_save_path1 = 'saves/student_statistics/' + \
+                                args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
+                                '_lr1=' + str(args.lr1) + \
+                                '_wd=' + str(args.wd) + \
+                                '_mo=' + str(args.mo) + \
+                                '_depth=' + str(args.depth) + \
+                                '_width=' + str(args.width) + \
+                                '_ca=' + str(args.ca) + \
+                                '_tau1=' + str(args.tau1) + \
+                                '.stat'
 
-    # create model directories
-    dirs = os.path.dirname(model_save_path1)
-    os.makedirs(dirs, exist_ok=True)
+        # create model directories
+        dirs = os.path.dirname(model_save_path1)
+        os.makedirs(dirs, exist_ok=True)
 
-    # model training stage 1
-    training_loss_list1, validating_accuracy_list1 = \
-        train_stage1(args, train_data_loader, validate_data_loader, teacher, student, model_save_path1)
-    record = {
-        'training_loss1': training_loss_list1,
-        'validating_accuracy1': validating_accuracy_list1
-    }
+        # model training stage 1
+        training_loss_list1, testing_accuracy_list1 = \
+            train_stage1(args, train_data_loader, test_data_loader, teacher, student, model_save_path1)
+        record = {
+            'training_loss1': training_loss_list1,
+            'testing_accuracy1': testing_accuracy_list1
+        }
 
-    # create stats directories
-    dirs = os.path.dirname(statistics_save_path1)
-    os.makedirs(dirs, exist_ok=True)
-    if args.n_training_epochs1 > 0 and (not args.flag_debug):
-        torch.save(record, statistics_save_path1)
-    print('===== training stage 1 finish. =====')
+        # create stats directories
+        dirs = os.path.dirname(statistics_save_path1)
+        os.makedirs(dirs, exist_ok=True)
+        if args.n_training_epochs1 > 0 and (not args.flag_debug):
+            torch.save(record, statistics_save_path1)
+        print('===== training stage 1 finish. =====')
 
-    # load best model found in stage 1
-    if not args.flag_debug:
-        record = torch.load(model_save_path1, map_location='cpu')
-        best_validating_accuracy = record['validating_accuracy']
-        student.load_state_dict(record['state_dict'])
-        print('===== best model in stage 1 loaded, validating acc = %f. =====' % (record['validating_accuracy']))
+        # load best model found in stage 1
+        if not args.flag_debug:
+            record = torch.load(model_save_path1, map_location='cpu')
+            best_testing_accuracy = record['testing_accuracy']
+            student.load_state_dict(record['state_dict'])
+            print('===== best model in stage 1 loaded, testing acc = %f. =====' % (record['testing_accuracy']))
 
     # model save path and statistics save path for stage 2
     model_save_path2 = 'saves/trained_students/' + \
-                        args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
+                        args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
                         '_lr2=' + str(args.lr2) + \
                         '_point=' + str(args.point) + \
                         '_gamma=' + str(args.gamma) + \
@@ -223,7 +220,7 @@ if __name__ == '__main__':
                         '_lambd=' + str(args.lambd) + \
                         '.model'
     statistics_save_path2 = 'saves/student_statistics/' + \
-                            args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
+                            args.data_name + '_' + args.student_network_name + '_' + args.teacher_network_name + '_' + args.model_name + \
                             '_lr2=' + str(args.lr2) + \
                             '_point=' + str(args.point) + \
                             '_gamma=' + str(args.gamma) + \

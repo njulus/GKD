@@ -26,7 +26,10 @@ def pretrain(args, train_data_loader, test_data_loader, network, model_save_path
     loss_function = nn.CrossEntropyLoss()
     optimizer = SGD(params=network.parameters(), lr=args.lr, weight_decay=args.wd,
                     momentum=args.mo, nesterov=True)
-    scheduler = MultiStepLR(optimizer, args.point, args.gamma)
+    if args.gamma != -1:
+        scheduler = MultiStepLR(optimizer, args.point, args.gamma)
+    else:
+        scheduler = CosineAnnealingLR(optimizer, args.n_training_epochs, 0.001 * args.lr)
 
     training_loss_list = []
     training_accuracy_list = []
