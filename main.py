@@ -74,7 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_new_classes', type=int, default=0)
     parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--model_name', type=str, default='ce', choices=['ce', 'kd', 'gkd'])
+    parser.add_argument('--model_name', type=str, default='gkd', choices=['ce', 'kd', 'gkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
     parser.add_argument('--flag_debug', action='store_true', default=False)
@@ -128,17 +128,20 @@ if __name__ == '__main__':
             teacher_args = copy.copy(args)
             teacher_args.depth = 110
             teacher = Network_Teacher.MyNetwork(teacher_args)
-            pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_resnet_teacher.model'
+            pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_resnet' + \
+                '_class=' + str(args.n_classes) + '_teacher.model'
         elif args.teacher_network_name == 'wide_resnet':
             teacher_args = copy.copy(args)
             teacher_args.depth, teacher_args.width = 40, 2
             teacher = Network_Teacher.MyNetwork(teacher_args)
-            pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_wide_resnet_teacher.model'
+            pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_wide_resnet' + \
+                '_class=' + str(args.n_classes) + '_teacher.model'
         elif args.teacher_network_name == 'mobile_net':
             teacher_args = copy.copy(args)
             teacher_args.ca = 1.0
             teacher = Network_Teacher.MyNetwork(teacher_args)
-            pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_mobile_net_teacher.model'
+            pretrained_teacher_save_path = 'saves/pretrained_teachers/' + args.data_name + '_mobile_net' + \
+                '_class=' + str(args.n_classes) + '_teacher.model'
         record = torch.load(pretrained_teacher_save_path, map_location='cpu')
         teacher.load_state_dict(record['state_dict'])
         teacher = teacher.cuda(args.devices[0])

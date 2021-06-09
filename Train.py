@@ -167,6 +167,8 @@ def train_stage1(args, train_data_loader, test_data_loader, teacher, student, mo
         else:
             print('epoch %d finish: training_loss = %f' % (epoch, training_loss))
     
+        scheduler.step()
+
     return training_loss_list1, testing_accuracy_list1
 
 
@@ -180,7 +182,7 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
         scheduler = MultiStepLR(optimizer, args.point, args.gamma)
     else:
         scheduler = CosineAnnealingLR(optimizer, args.n_training_epochs2, 0.001 * args.lr2)
-    
+
     training_loss_list2 = []
     teaching_loss_list2 = []
     training_accuracy_list2 = []
