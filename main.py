@@ -21,7 +21,6 @@ from networks import resnet, wide_resnet, mobile_net
 
 from Train import train_stage1
 from Train import train_stage2
-from Test import test
 from utils import global_variable as GV
 import os
 
@@ -213,9 +212,6 @@ if __name__ == '__main__':
                         '_depth=' + str(args.depth) + \
                         '_width=' + str(args.width) + \
                         '_ca=' + str(args.ca) + \
-                        '_dropout=' + str(args.dropout_rate) + \
-                        '_batch=' + str(args.batch_size) + \
-                        '_merge=' + str(args.flag_merge) + \
                         '_tau2=' + str(args.tau2) + \
                         '_lambd=' + str(args.lambd) + \
                         '.model'
@@ -229,21 +225,18 @@ if __name__ == '__main__':
                             '_depth=' + str(args.depth) + \
                             '_width=' + str(args.width) + \
                             '_ca=' + str(args.ca) + \
-                            '_dropout=' + str(args.dropout_rate) + \
-                            '_batch=' + str(args.batch_size) + \
-                            '_merge=' + str(args.flag_merge) + \
                             '_tau2=' + str(args.tau2) + \
                             '_lambd=' + str(args.lambd) + \
                             '.stat'
 
     # model training stage 2
-    training_loss_list2, teaching_loss_list2, training_accuracy_list2, validating_accuracy_list2 = \
-        train_stage2(args, train_data_loader, validate_data_loader, teacher, student, model_save_path2)
+    training_loss_list2, teaching_loss_list2, training_accuracy_list2, testing_accuracy_list2 = \
+        train_stage2(args, train_data_loader, test_data_loader, teacher, student, model_save_path2)
     record = {
         'training_loss2': training_loss_list2,
         'teaching_loss2': teaching_loss_list2,
         'training_accuracy2': training_accuracy_list2,
-        'validating_accuracy2': validating_accuracy_list2
+        'testing_accuracy2': testing_accuracy_list2
     }
 
     # create stats directories
@@ -256,10 +249,6 @@ if __name__ == '__main__':
     # load best model found in stage 2
     if not args.flag_debug:
         record = torch.load(model_save_path2)
-        best_validating_accuracy = record['validating_accuracy']
+        best_testing_accuracy = record['testing_accuracy']
         student.load_state_dict(record['state_dict'])
-        print('===== best model in stage 2 loaded, validating acc = %f. =====' % (record['validating_accuracy']))
-
-    # model testing
-    testing_accuracy = test(args, test_data_loader, student, description='testing')
-    print('===== testing finished, testing acc = %f. =====' % (testing_accuracy))
+        print('===== best model in stage 2 loaded, testing acc = %f. =====' % (record['testing_accuracy']))

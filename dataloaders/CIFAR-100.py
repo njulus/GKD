@@ -16,10 +16,11 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 class MyDataset(Dataset):
-    def __init__(self, data_path, flag_mode, n_new_classes):
+    def __init__(self, data_path, flag_mode, n_classes, n_new_classes):
         super(MyDataset, self).__init__()
         self.data_path = data_path
         self.flag_mode = flag_mode
+        self.n_classes = n_classes
         self.n_new_classes = n_new_classes
 
         self.features, self.labels = self.read_data()
@@ -49,7 +50,7 @@ class MyDataset(Dataset):
         self.label_q = np.load(self.data_path + 'label_q.npy')
         mapping = {label:pos for pos, label in enumerate(self.label_q)}
         positions = np.array([mapping[label] for label in labels])
-        indexes_needed = np.argwhere((positions >= self.n_new_classes) & (positions < 50 + self.n_new_classes)).squeeze(1)
+        indexes_needed = np.argwhere((positions >= self.n_new_classes) & (positions < self.n_classes + self.n_new_classes)).squeeze(1)
 
         features_needed = features[indexes_needed]
         labels_needed = labels[indexes_needed]
@@ -87,13 +88,13 @@ class MyDataset(Dataset):
         return image, y
 
     def get_n_classes(self):
-        assert(len(np.unique(self.labels)) == 50)
-        return 50
+        assert(len(np.unique(self.labels)) == self.n_classes)
+        return self.n_classes
 
 
 
-def generate_data_loader(data_path, flag_mode, n_new_classes, batch_size, n_workers):
-    my_dataset = MyDataset(data_path, flag_mode, n_new_classes)
+def generate_data_loader(data_path, flag_mode, n_classes, n_new_classes, batch_size, n_workers):
+    my_dataset = MyDataset(data_path, flag_mode, n_classes, n_new_classes)
     my_data_loader = DataLoader(my_dataset, batch_size, shuffle=True, num_workers=n_workers)
     return my_data_loader
 
@@ -102,11 +103,12 @@ def generate_data_loader(data_path, flag_mode, n_new_classes, batch_size, n_work
 if __name__ == '__main__':
     data_path = '../datasets/CIFAR-100/'
     flag_mode = 'train'
+    n_classes = 50
     n_new_classes = 0
     batch_size = 2
     n_workers = 0
 
-    my_data_loader = generate_data_loader(data_path, flag_mode, n_new_classes, batch_size, n_workers)
+    my_data_loader = generate_data_loader(data_path, flag_mode, n_classes, n_new_classes, batch_size, n_workers)
     for batch_index, batch in enumerate(my_data_loader):
         image, label = batch
         print(image.size())

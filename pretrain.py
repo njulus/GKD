@@ -23,6 +23,8 @@ import os
 def display_args(args):
     print('===== task arguments =====')
     print('data_name = %s' % (args.data_name))
+    print('n_classes = %d' % (args.n_classes))
+    print('n_new_classes = %d' % (args.n_new_classes))
     print('network_name = %s' % (args.network_name))
     print('===== experiment environment arguments =====')
     print('devices = %s' % (str(args.devices)))
@@ -57,6 +59,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # task arguments
     parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
+    parser.add_argument('--n_classes', type=int, default=50)
     parser.add_argument('--n_new_classes', type=int, default=0)
     parser.add_argument('--network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     # experiment environment arguments
@@ -88,10 +91,10 @@ if __name__ == '__main__':
     Network = importlib.import_module('networks.' + args.network_name)
 
     # generate data_loader
-    train_data_loader = Data.generate_data_loader(data_path, 'train', args.n_new_classes, args.batch_size, args.n_workers)
+    train_data_loader = Data.generate_data_loader(data_path, 'train', args.n_classes, args.n_new_classes, args.batch_size, args.n_workers)
     args.number_of_classes = train_data_loader.dataset.get_n_classes()
     print('===== train data loader ready. =====')
-    test_data_loader = Data.generate_data_loader(data_path, 'test', args.n_new_classes, args.batch_size, args.n_workers)
+    test_data_loader = Data.generate_data_loader(data_path, 'test', args.n_classes, args.n_new_classes, args.batch_size, args.n_workers)
     print('===== test data loader ready. =====')
 
     # generate network

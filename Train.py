@@ -82,3 +82,42 @@ def pretrain(args, train_data_loader, test_data_loader, network, model_save_path
         scheduler.step()
 
     return training_loss_list, training_accuracy_list, testing_accuracy_list
+
+
+
+def train_stage2(args, train_data_loader, test_data_loader, teacher, student, model_save_path2):
+    training_loss_function = nn.CrossEntropyLoss()
+    teaching_loss_function = nn.KLDivLoss(reduction='batchmean')
+    optimizer = SGD(params=student.parameters(), lr=args.lr2, weight_decay=args.wd,
+                    momentum=args.mo, nesterov=True)
+    if args.gamma != -1:
+        scheduler = MultiStepLR(optimizer, args.point, args.gamma)
+    else:
+        scheduler = CosineAnnealingLR(optimizer, args.n_training_epochs, 0.001 * args.lr2)
+    
+    training_loss_list2 = []
+    teaching_loss_list2 = []
+    training_accuracy_list2 = []
+    testing_accuracy_list2 = []
+
+    for epoch in range(1, args.n_training_epochs2 + 1):
+        training_loss = 0
+        teaching_loss = 0
+        training_accuracy = 0
+
+        student.train()
+        for batch_index, batch in enumerate(train_data_loader):
+            images, labels = batch
+            images = images.float().cuda(args.devices[0])
+            labels = labels.float().cuda(args.devices[0])
+
+            logits = student.forward(images)
+            training_loss_value = training_loss_function(logits, labels)
+
+            if args.model_name == 'kd':
+                with torch.no_grad():
+                    teacher_logits = teacher.forward(images)
+                    teaching_loss_value = teaching_loss_function()
+
+
+            training_loss += training_loss_value.
