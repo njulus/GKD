@@ -122,4 +122,4 @@ if __name__ == '__main__':
 
     display_args(args)
 
-    check_model(args)
+    # check_model(args)

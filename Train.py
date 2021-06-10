@@ -115,24 +115,25 @@ def train_stage1(args, train_data_loader, test_data_loader, teacher, student, mo
 
             with torch.no_grad():
                 anchor_id, positive_id, negative_id = miner(student_embeddings, labels)
-                merged_anchor_id, merged_positive_id, merged_negative_id, mask = \
+                merged_anchor_id, merged_positive_id, merged_negative_id = \
                     merge(args, anchor_id, positive_id, negative_id)
 
-            teacher_anchor = teacher_embeddings[merged_anchor_id]
-            teacher_positive = teacher_embeddings[merged_positive_id]
-            teacher_negative = teacher_embeddings[merged_negative_id]
+            with torch.no_grad():
+                teacher_anchor = teacher_embeddings[merged_anchor_id]
+                teacher_positive = teacher_embeddings[merged_positive_id]
+                teacher_negative = teacher_embeddings[merged_negative_id]
+
+                teacher_ap_dist = torch.norm(teacher_anchor - teacher_positive, p=2, dim=1)
+                teacher_an_dist = torch.norm(teacher_anchor.unsqueeze(1) - teacher_negative, p=2, dim=2)
+
+                teacher_tuple_logits = torch.cat([-teacher_ap_dist.unsqueeze(1), -teacher_an_dist], dim=1) / args.tau1
 
             student_anchor = student_embeddings[merged_anchor_id]
             student_positive = student_embeddings[merged_positive_id]
             student_negative = student_embeddings[merged_negative_id]
 
-            teacher_ap_dist = torch.norm(teacher_anchor - teacher_positive, p=2, dim=1)
-            teacher_an_dist = torch.masked_fill(torch.norm(teacher_anchor.unsqueeze(1) - teacher_negative, p=2, dim=2), mask == 0, 1e9)
-
             student_ap_dist = torch.norm(student_anchor - student_positive, p=2, dim=1)
-            student_an_dist = torch.masked_fill(torch.norm(student_anchor.unsqueeze(1) - student_negative, p=2, dim=2), mask == 0, 1e9)
-
-            teacher_tuple_logits = torch.cat([-teacher_ap_dist.unsqueeze(1), -teacher_an_dist], dim=1) / args.tau1
+            student_an_dist = torch.norm(student_anchor.unsqueeze(1) - student_negative, p=2, dim=2)
 
             student_tuple_logits = torch.cat([-student_ap_dist.unsqueeze(1), -student_an_dist], dim=1) / args.tau1
 
