@@ -262,11 +262,11 @@ if __name__ == '__main__':
         torch.save(record, statistics_save_path2)
     print('===== training stage 2 finish. =====')
 
-    # load best model found in stage 2
-    if not args.flag_debug:
-        record = torch.load(model_save_path2)
-        best_testing_accuracy = record['testing_accuracy']
-        student.load_state_dict(record['state_dict'])
-        print('===== best model in stage 2 loaded, testing acc = %f. =====' % (record['testing_accuracy']))
+    # # load best model found in stage 2
+    # if not args.flag_debug:
+    #     record = torch.load(model_save_path2)
+    #     best_testing_accuracy = record['testing_accuracy']
+    #     student.load_state_dict(record['state_dict'])
+    #     print('===== best model in stage 2 loaded, testing acc = %f. =====' % (record['testing_accuracy']))
     
     display_args(args)
