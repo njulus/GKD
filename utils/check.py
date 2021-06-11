@@ -56,7 +56,25 @@ def display_args(args):
 
 
 
-def check_model(args):
+def check_model_stage1(args):
+    model_save_path1 = '../saves/trained_students/' + \
+                        args.data_name + '_' + args.model_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
+                        '_class=' + str(args.n_classes) + \
+                        '_newclass=' + str(args.n_new_classes) + \
+                        '_lr1=' + str(args.lr1) + \
+                        '_wd=' + str(args.wd) + \
+                        '_mo=' + str(args.mo) + \
+                        '_depth=' + str(args.depth) + \
+                        '_width=' + str(args.width) + \
+                        '_ca=' + str(args.ca) + \
+                        '_tau1=' + str(args.tau1) + \
+                        '.model'
+    record = torch.load(model_save_path1, map_location='cpu')
+    print('===== best model in stage 1 loaded, testing acc = %f. =====' % (record['testing_accuracy']))
+
+
+
+def check_model_stage2(args):
     model_save_path2 = '../saves/trained_students/' + \
                         args.data_name + '_' + args.model_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
                         '_class=' + str(args.n_classes) + \
@@ -91,9 +109,9 @@ if __name__ == '__main__':
     parser.add_argument('--data_name', type=str, default='CUB-200', choices=['CIFAR-100', 'CUB-200'])
     parser.add_argument('--n_classes', type=int, default=100)
     parser.add_argument('--n_new_classes', type=int, default=0)
-    parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--teacher_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--student_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--model_name', type=str, default='ce', choices=['ce', 'kd', 'gkd'])
+    parser.add_argument('--model_name', type=str, default='gkd', choices=['ce', 'kd', 'gkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
     parser.add_argument('--flag_debug', action='store_true', default=False)
@@ -122,4 +140,5 @@ if __name__ == '__main__':
 
     display_args(args)
 
-    # check_model(args)
+    check_model_stage1(args)
+    # check_model_stage2(args)
