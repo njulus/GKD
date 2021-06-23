@@ -69,11 +69,11 @@ if __name__ == '__main__':
     # create a parser
     parser = argparse.ArgumentParser()
     # task arguments
-    parser.add_argument('--data_name', type=str, default='CUB-200', choices=['CIFAR-100', 'CUB-200'])
-    parser.add_argument('--n_classes', type=int, default=100)
+    parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
+    parser.add_argument('--n_classes', type=int, default=50)
     parser.add_argument('--n_new_classes', type=int, default=0)
-    parser.add_argument('--teacher_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--student_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--model_name', type=str, default='gkd', choices=['ce', 'kd', 'gkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
@@ -92,12 +92,12 @@ if __name__ == '__main__':
     parser.add_argument('--ca', type=float, default=0.25)  # channel
     parser.add_argument('--dropout_rate', type=float, default=0.3)
     # training procedure arguments
-    parser.add_argument('--n_training_epochs1', type=int, default=100)
-    parser.add_argument('--n_training_epochs2', type=int, default=0)
+    parser.add_argument('--n_training_epochs1', type=int, default=0)
+    parser.add_argument('--n_training_epochs2', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--tau1', type=float, default=4) # temperature in stage 1
     parser.add_argument('--tau2', type=float, default=2) # temperature in stage 2
-    parser.add_argument('--lambd', type=float, default=100) # weight of teaching loss in stage 2
+    parser.add_argument('--lambd', type=float, default=10) # weight of teaching loss in stage 2
 
     args = parser.parse_args()
 
@@ -262,11 +262,11 @@ if __name__ == '__main__':
         torch.save(record, statistics_save_path2)
     print('===== training stage 2 finish. =====')
 
-    # # load best model found in stage 2
-    # if not args.flag_debug:
-    #     record = torch.load(model_save_path2)
-    #     best_testing_accuracy = record['testing_accuracy']
-    #     student.load_state_dict(record['state_dict'])
-    #     print('===== best model in stage 2 loaded, testing acc = %f. =====' % (record['testing_accuracy']))
+    # load best model found in stage 2
+    if not args.flag_debug:
+        record = torch.load(model_save_path2)
+        best_testing_accuracy = record['testing_accuracy']
+        student.load_state_dict(record['state_dict'])
+        print('===== best model in stage 2 loaded, testing acc = %f. =====' % (record['testing_accuracy']))
     
     display_args(args)

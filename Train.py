@@ -184,6 +184,34 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
     else:
         scheduler = CosineAnnealingLR(optimizer, args.n_training_epochs2, 0.001 * args.lr2)
 
+    if args.model_name == 'gkd':
+        class_center_file_path = 'saves/class_centers/' + args.data_name + '_' + args.teacher_network_name + \
+            '_class=' + str(args.n_classes) + \
+            '_newclass=' + str(args.n_new_classes) + \
+            '.center'
+        if os.path.exists(class_center_file_path):
+            class_centers = torch.load(class_center_file_path)
+            class_centers = class_centers.cuda(args.devices[0])
+        else:
+            class_centers = torch.zeros((args.n_classes, teacher.fc.in_features)).cuda(args.devices[0])
+            class_count = torch.zeros(args.n_classes).cuda(args.devices[0])
+            for batch_index, batch in enumerate(train_data_loader):
+                images, labels = batch
+                images = images.float().cuda(args.devices[0])
+                labels = labels.long().cuda(args.devices[0])
+                
+                with torch.no_grad():
+                    teacher_embeddings = teacher.forward(images, flag_embedding=True)
+                    for i in range(0, args.n_classes):
+                        index_of_class_i = (labels == i)
+                        class_centers[i] += torch.sum(teacher_embeddings[index_of_class_i], dim=0)
+                        class_count[i] += index_of_class_i.size()[0]
+            class_count = class_count.unsqueeze(1)
+            class_centers = class_centers / class_count
+            class_centers = F.normalize(class_centers, p=2, dim=1)
+            torch.save(class_centers, class_center_file_path)
+        print('===== teacher class centers ready. =====')
+
     training_loss_list2 = []
     teaching_loss_list2 = []
     training_accuracy_list2 = []
@@ -215,9 +243,19 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
                 )
                 total_loss_value = training_loss_value + teaching_loss_value
             elif args.model_name == 'gkd':
-                # TODO
-                pass
+                with torch.no_grad():
+                    label_table = torch.arange(args.n_classes).long().unsqueeze(1).cuda(args.devices[0])
+                    class_in_batch = (labels == label_table).any(dim=1)
+                    class_centers_in_batch = class_centers[class_in_batch]
 
+                    teacher_embeddings = teacher.forward(images, flag_embedding=True)
+                    teacher_logits = torch.mm(teacher_embeddings, class_centers_in_batch.t())
+                teaching_loss_value = args.lambd * teaching_loss_function(
+                    F.log_softmax(logits[:, class_in_batch] / args.tau2, dim=1),
+                    F.softmax(teacher_logits / args.tau2, dim=1)
+                )
+                total_loss_value = training_loss_value + teaching_loss_value
+            
             optimizer.zero_grad()
             total_loss_value.backward()
             optimizer.step()
