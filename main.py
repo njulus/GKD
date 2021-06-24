@@ -96,7 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_training_epochs2', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--tau1', type=float, default=4) # temperature in stage 1
-    parser.add_argument('--tau2', type=float, default=2) # temperature in stage 2
+    parser.add_argument('--tau2', type=float, default=1) # temperature in stage 2
     parser.add_argument('--lambd', type=float, default=10) # weight of teaching loss in stage 2
 
     args = parser.parse_args()

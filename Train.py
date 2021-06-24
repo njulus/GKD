@@ -238,7 +238,7 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
                 with torch.no_grad():
                     teacher_logits = teacher.forward(images)
                 teaching_loss_value = args.lambd * teaching_loss_function(
-                    F.log_softmax(logits / args.tau2, dim=1),
+                    F.log_softmax(logits, dim=1),
                     F.softmax(teacher_logits / args.tau2, dim=1)
                 )
                 total_loss_value = training_loss_value + teaching_loss_value
@@ -251,7 +251,7 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
                     teacher_embeddings = teacher.forward(images, flag_embedding=True)
                     teacher_logits = torch.mm(teacher_embeddings, class_centers_in_batch.t())
                 teaching_loss_value = args.lambd * teaching_loss_function(
-                    F.log_softmax(logits[:, class_in_batch] / args.tau2, dim=1),
+                    F.log_softmax(logits[:, class_in_batch], dim=1),
                     F.softmax(teacher_logits / args.tau2, dim=1)
                 )
                 total_loss_value = training_loss_value + teaching_loss_value
