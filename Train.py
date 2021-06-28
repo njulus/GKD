@@ -184,7 +184,7 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
     else:
         scheduler = CosineAnnealingLR(optimizer, args.n_training_epochs2, 0.001 * args.lr2)
 
-    if args.model_name == 'gkd':
+    if args.model_name == 'gkd' or args.model_name == 'pgkd':
         class_center_file_path = 'saves/class_centers/' + args.data_name + '_' + args.teacher_network_name + \
             '_class=' + str(args.n_classes) + \
             '_newclass=' + str(args.n_new_classes) + \
@@ -255,6 +255,8 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
                     F.softmax(teacher_logits / args.tau2, dim=1)
                 )
                 total_loss_value = training_loss_value + teaching_loss_value
+            elif args.model_name == 'pgkd':
+                pass
             
             optimizer.zero_grad()
             total_loss_value.backward()
