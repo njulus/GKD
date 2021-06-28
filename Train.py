@@ -256,7 +256,18 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
                 )
                 total_loss_value = training_loss_value + teaching_loss_value
             elif args.model_name == 'pgkd':
-                pass
+                with torch.no_grad():
+                    label_table = torch.arange(args.n_classes).long().unsqueeze(1).cuda(args.devices[0])
+                    class_in_batch = (labels == label_table).any(dim=1)
+                    class_centers_in_batch = class_centers[class_in_batch]
+
+                    teacher_embeddings = teacher.forward(images, flag_embedding=True)
+                    teacher_logits = torch.mm(teacher_embeddings, class_centers_in_batch.t())
+                teaching_loss_value = args.lambd * teaching_loss_function(
+                    F.log_softmax(logits[:, class_in_batch], dim=1),
+                    F.softmax(teacher_logits / args.tau2, dim=1)
+                )
+                total_loss_value = training_loss_value + teaching_loss_value
             
             optimizer.zero_grad()
             total_loss_value.backward()
