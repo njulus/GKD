@@ -106,11 +106,11 @@ if __name__ == '__main__':
     # create a parser
     parser = argparse.ArgumentParser()
     # task arguments
-    parser.add_argument('--data_name', type=str, default='CUB-200', choices=['CIFAR-100', 'CUB-200'])
-    parser.add_argument('--n_classes', type=int, default=100)
+    parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
+    parser.add_argument('--n_classes', type=int, default=50)
     parser.add_argument('--n_new_classes', type=int, default=0)
-    parser.add_argument('--teacher_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--student_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--model_name', type=str, default='gkd', choices=['ce', 'kd', 'gkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr1', type=float, default=0.1)
     parser.add_argument('--lr2', type=float, default=0.1)
     parser.add_argument('--point', type=int, nargs='+', default=(50,100,150))
-    parser.add_argument('--gamma', type=float, default=-1.0)
+    parser.add_argument('--gamma', type=float, default=0.2)
     parser.add_argument('--wd', type=float, default=0.0005)  # weight decay
     parser.add_argument('--mo', type=float, default=0.9)  # momentum
     # network arguments
@@ -133,12 +133,12 @@ if __name__ == '__main__':
     parser.add_argument('--n_training_epochs2', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--tau1', type=float, default=4) # temperature in stage 1
-    parser.add_argument('--tau2', type=float, default=2) # temperature in stage 2
-    parser.add_argument('--lambd', type=float, default=100) # weight of teaching loss in stage 2
+    parser.add_argument('--tau2', type=float, default=1) # temperature in stage 2
+    parser.add_argument('--lambd', type=float, default=1.0) # weight of teaching loss in stage 2
 
     args = parser.parse_args()
 
     display_args(args)
 
-    check_model_stage1(args)
-    # check_model_stage2(args)
+    # check_model_stage1(args)
+    check_model_stage2(args)
