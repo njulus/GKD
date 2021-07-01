@@ -11,11 +11,9 @@ import GPUtil
 # determine the operating system and the GPUs available currently
 
 if platform.platform().startswith('Windows'):
-    PLATFORM = 'CLIENT'
     WORKERS = 0
     n_gpus = 1
 elif platform.platform().startswith('Linux'):
-    PLATFORM = 'SERVER'
     WORKERS = 8
     n_gpus = 1
 
