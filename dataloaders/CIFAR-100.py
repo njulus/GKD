@@ -85,7 +85,8 @@ class MyDataset(Dataset):
             image = self.transform_simple(image)
         label = self.labels[index]
         y = self.label2y[label]
-        return image, y
+
+        return image, y, label
 
     def get_n_classes(self):
         assert(len(np.unique(self.labels)) == self.n_classes)

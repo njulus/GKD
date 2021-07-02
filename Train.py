@@ -41,8 +41,8 @@ def pretrain(args, train_data_loader, test_data_loader, network, model_save_path
         training_accuracy = 0
 
         network.train()
-        for batch_index, batch in enumerate(train_data_loader):
-            images, labels = batch
+        for _, batch in enumerate(train_data_loader):
+            images, labels, _ = batch
             images = images.float().cuda(args.devices[0])
             labels = labels.long().cuda(args.devices[0])
 
@@ -101,8 +101,8 @@ def train_stage1(args, train_data_loader, test_data_loader, teacher, student, mo
         n_tuples = 0
 
         student.train()
-        for batch_index, batch in enumerate(train_data_loader):
-            images, labels = batch
+        for _, batch in enumerate(train_data_loader):
+            images, labels, _ = batch
             images = images.float().cuda(args.devices[0])
             labels = labels.long().cuda(args.devices[0])
 
@@ -195,8 +195,8 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
         else:
             class_centers = torch.zeros((args.n_classes, teacher.fc.in_features)).cuda(args.devices[0])
             class_count = torch.zeros(args.n_classes).cuda(args.devices[0])
-            for batch_index, batch in enumerate(train_data_loader):
-                images, labels = batch
+            for _, batch in enumerate(train_data_loader):
+                images, labels, _ = batch
                 images = images.float().cuda(args.devices[0])
                 labels = labels.long().cuda(args.devices[0])
                 
@@ -224,8 +224,8 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
         training_accuracy = 0
 
         student.train()
-        for batch_index, batch in enumerate(train_data_loader):
-            images, labels = batch
+        for _, batch in enumerate(train_data_loader):
+            images, labels, _ = batch
             images = images.float().cuda(args.devices[0])
             labels = labels.long().cuda(args.devices[0])
 
@@ -275,7 +275,7 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
 
             prediction = torch.argmax(logits, dim=1)
             training_loss += training_loss_value.cpu().item() * images.size()[0]
-            if args.model_name in {'kd', 'gkd'}:
+            if args.model_name in {'kd', 'gkd', 'pgkd'}:
                 teaching_loss += teaching_loss_value.cpu().item() * images.size()[0]
             else:
                 pass

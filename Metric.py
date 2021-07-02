@@ -37,15 +37,16 @@ def display_args(args):
 
 
 
-def test_instance_metric(args, train_data_loader, teacher):
+def test_instance_metric(args, train_data_loader, teacher, label_set, teacher_label_set):
     # define a instance-metric
     def cal_maximum_logit(thres):
         pass
     
-    for batch_index, batch in enumerate(train_data_loader):
-        images, labels = batch
+    for _, batch in enumerate(train_data_loader):
+        images, labels, raw_labels = batch
         images = images.float().cuda(args.devices[0])
         labels = labels.long().cuda(args.devices[0])
+        raw_labels = raw_labels.long().cuda(args.devices[0])
         
 
 
@@ -101,8 +102,8 @@ if __name__ == '__main__':
     print('===== train data loader ready. =====')
     teacher_data_loader = Data.generate_data_loader(data_path, 'train', args.n_classes, 0, args.batch_size, args.n_workers)
     print('===== teacher data loader ready. =====')
-    print(train_data_loader.dataset)
-
+    label_set = np.unique(train_data_loader.dataset.labels)
+    teacher_label_set = np.unique(teacher_data_loader.dataset.labels)
 
     if args.teacher_network_name == 'resnet':
         teacher_args = copy.copy(args)
@@ -131,4 +132,4 @@ if __name__ == '__main__':
     teacher.eval()
     print('===== teacher ready. =====')
 
-    test_instance_metric(args, train_data_loader, teacher)
+    test_instance_metric(args, train_data_loader, teacher, label_set, teacher_label_set)

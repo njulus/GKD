@@ -12,8 +12,8 @@ from utils import global_variable as GV
 def test(args, data_loader, network):
     accuracy = 0
     network.eval()
-    for batch_index, batch in enumerate(data_loader):
-        images, labels = batch
+    for _, batch in enumerate(data_loader):
+        images, labels, _ = batch
         images = images.float().cuda(args.devices[0])
         labels = labels.long().cuda(args.devices[0])
         
