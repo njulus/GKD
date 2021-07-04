@@ -38,7 +38,7 @@ def display_args(args):
 
 
 
-def test_instance_metric(args, train_data_loader, teacher, teacher_label_set):
+def get_instance_metric(args, train_data_loader, teacher, teacher_label_set):
     maxlogit_all = []
     entropy_all = []
     inout_all = []
@@ -74,11 +74,18 @@ def test_instance_metric(args, train_data_loader, teacher, teacher_label_set):
     np.save(entropy_path, entropy_all)
     inout_path = 'saves/metrics/inout_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
     np.save(inout_path, inout_all)
-        
-        
 
 
-def test_class_metric(args, train_data_loader, teacher):
+
+def draw_instance_metric(args):
+    maxlogit_path = 'saves/metrics/maxlogit_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    entropy_path = 'saves/metrics/entropy_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    inout_path = 'saves/metrics/inout_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    
+      
+        
+
+def get_class_metric(args, train_data_loader, teacher):
     pass
 
 
@@ -159,4 +166,5 @@ if __name__ == '__main__':
     teacher.eval()
     print('===== teacher ready. =====')
 
-    test_instance_metric(args, train_data_loader, teacher, teacher_label_set)
+    get_instance_metric(args, train_data_loader, teacher, teacher_label_set)
+    draw_instance_metric(args)
