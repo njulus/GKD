@@ -15,6 +15,7 @@ import numpy as np
 
 import torch
 from torch import nn
+from torch.distributions.categorical import Categorical
 from torchvision import models
 
 from networks import resnet, wide_resnet, mobile_net
@@ -37,16 +38,43 @@ def display_args(args):
 
 
 
-def test_instance_metric(args, train_data_loader, teacher, label_set, teacher_label_set):
-    # define a instance-metric
-    def cal_maximum_logit(thres):
-        pass
-    
+def test_instance_metric(args, train_data_loader, teacher, teacher_label_set):
+    maxlogit_all = []
+    entropy_all = []
+    inout_all = []
+
     for _, batch in enumerate(train_data_loader):
         images, labels, raw_labels = batch
         images = images.float().cuda(args.devices[0])
         labels = labels.long().cuda(args.devices[0])
-        raw_labels = raw_labels.long().cuda(args.devices[0])
+        raw_labels = np.array(raw_labels)
+
+        with torch.no_grad():
+            teacher_logits = teacher.forward(images)
+            maxlogit = torch.max(teacher_logits, dim=1)[0]
+            distributions = Categorical(logits=teacher_logits)
+            entropy = distributions.entropy()
+
+            maxlogit_all += list(maxlogit.cpu().numpy())
+            entropy_all += list(entropy.cpu().numpy())
+            for raw_label in raw_labels:
+                if raw_label in teacher_label_set:
+                    inout_all.append(1)
+                else:
+                    inout_all.append(0)
+        # break
+
+    maxlogit_all = np.array(maxlogit_all)
+    entropy_all = np.array(entropy_all)
+    inout_all = np.array(inout_all)
+
+    maxlogit_path = 'saves/metrics/maxlogit_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    np.save(maxlogit_path, maxlogit_all)
+    entropy_path = 'saves/metrics/entropy_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    np.save(entropy_path, entropy_all)
+    inout_path = 'saves/metrics/inout_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    np.save(inout_path, inout_all)
+        
         
 
 
@@ -102,7 +130,6 @@ if __name__ == '__main__':
     print('===== train data loader ready. =====')
     teacher_data_loader = Data.generate_data_loader(data_path, 'train', args.n_classes, 0, args.batch_size, args.n_workers)
     print('===== teacher data loader ready. =====')
-    label_set = np.unique(train_data_loader.dataset.labels)
     teacher_label_set = np.unique(teacher_data_loader.dataset.labels)
 
     if args.teacher_network_name == 'resnet':
@@ -132,4 +159,4 @@ if __name__ == '__main__':
     teacher.eval()
     print('===== teacher ready. =====')
 
-    test_instance_metric(args, train_data_loader, teacher, label_set, teacher_label_set)
+    test_instance_metric(args, train_data_loader, teacher, teacher_label_set)
