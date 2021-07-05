@@ -18,6 +18,8 @@ from torch import nn
 from torch.distributions.categorical import Categorical
 from torchvision import models
 
+from matplotlib import pyplot as plt
+
 from networks import resnet, wide_resnet, mobile_net
 
 from Train import train_stage1
@@ -41,6 +43,7 @@ def display_args(args):
 def get_instance_metric(args, train_data_loader, teacher, teacher_label_set):
     maxlogit_all = []
     entropy_all = []
+    pseudo_all = []
     inout_all = []
 
     for _, batch in enumerate(train_data_loader):
@@ -54,6 +57,8 @@ def get_instance_metric(args, train_data_loader, teacher, teacher_label_set):
             maxlogit = torch.max(teacher_logits, dim=1)[0]
             distributions = Categorical(logits=teacher_logits)
             entropy = distributions.entropy()
+            pseudo_labels = torch.argmax(teacher_logits, dim=1)
+            pseudo = nn.CrossEntropyLoss(reduction='none')(teacher_logits, pseudo_labels)
 
             maxlogit_all += list(maxlogit.cpu().numpy())
             entropy_all += list(entropy.cpu().numpy())
@@ -62,31 +67,22 @@ def get_instance_metric(args, train_data_loader, teacher, teacher_label_set):
                     inout_all.append(1)
                 else:
                     inout_all.append(0)
-        # break
+            pseudo_all += list(pseudo.cpu().numpy())
 
     maxlogit_all = np.array(maxlogit_all)
     entropy_all = np.array(entropy_all)
+    pseudo_all = np.array(pseudo_all)
     inout_all = np.array(inout_all)
 
     maxlogit_path = 'saves/metrics/maxlogit_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
     np.save(maxlogit_path, maxlogit_all)
     entropy_path = 'saves/metrics/entropy_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
     np.save(entropy_path, entropy_all)
+    pseudo_path = 'saves/metrics/pseudo_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    np.save(pseudo_path, pseudo_all)
     inout_path = 'saves/metrics/inout_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
     np.save(inout_path, inout_all)
 
-
-
-def draw_instance_metric(args):
-    maxlogit_path = 'saves/metrics/maxlogit_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
-    entropy_path = 'saves/metrics/entropy_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
-    inout_path = 'saves/metrics/inout_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
-    
-      
-        
-
-def get_class_metric(args, train_data_loader, teacher):
-    pass
 
 
 if __name__ == '__main__':
@@ -166,5 +162,4 @@ if __name__ == '__main__':
     teacher.eval()
     print('===== teacher ready. =====')
 
-    get_instance_metric(args, train_data_loader, teacher, teacher_label_set)
-    draw_instance_metric(args)
+    # get_instance_metric(args, train_data_loader, teacher, teacher_label_set)
