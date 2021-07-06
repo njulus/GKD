@@ -111,9 +111,6 @@ if __name__ == '__main__':
 
     my_data_loader = generate_data_loader(data_path, flag_mode, n_classes, n_new_classes, batch_size, n_workers)
     for batch_index, batch in enumerate(my_data_loader):
-        image, label = batch
-        print(image.size())
-        print(label.size())
+        image, label, _ = batch
+        print(image[0, 0, ...])
         break
-
-    print(my_data_loader.dataset.get_n_classes())

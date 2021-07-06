@@ -176,7 +176,6 @@ def train_stage1(args, train_data_loader, test_data_loader, teacher, student, mo
 
 def train_stage2(args, train_data_loader, test_data_loader, teacher, student, model_save_path2):
     training_loss_function = nn.CrossEntropyLoss()
-    teaching_loss_function = nn.KLDivLoss(reduction='batchmean')
     optimizer = SGD(params=student.parameters(), lr=args.lr2, weight_decay=args.wd,
         momentum=args.mo, nesterov=True)
     if args.gamma != -1:
@@ -235,6 +234,7 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
             if args.model_name == 'ce':
                 total_loss_value = training_loss_value
             elif args.model_name == 'kd':
+                teaching_loss_function = nn.KLDivLoss(reduction='batchmean')
                 with torch.no_grad():
                     teacher_logits = teacher.forward(images)
                 teaching_loss_value = args.lambd * teaching_loss_function(
@@ -243,6 +243,7 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
                 )
                 total_loss_value = training_loss_value + teaching_loss_value
             elif args.model_name == 'gkd':
+                teaching_loss_function = nn.KLDivLoss(reduction='batchmean')
                 with torch.no_grad():
                     label_table = torch.arange(args.n_classes).long().unsqueeze(1).cuda(args.devices[0])
                     class_in_batch = (labels == label_table).any(dim=1)
@@ -256,17 +257,25 @@ def train_stage2(args, train_data_loader, test_data_loader, teacher, student, mo
                 )
                 total_loss_value = training_loss_value + teaching_loss_value
             elif args.model_name == 'wgkd':
+                teaching_loss_function = nn.KLDivLoss(reduction='none')
                 with torch.no_grad():
                     label_table = torch.arange(args.n_classes).long().unsqueeze(1).cuda(args.devices[0])
                     class_in_batch = (labels == label_table).any(dim=1)
                     class_centers_in_batch = class_centers[class_in_batch]
 
-                    teacher_embeddings = teacher.forward(images, flag_embedding=True)
+                    teacher_output_logits, teacher_embeddings = \
+                        teacher.forward(images, flag_both=True)
+                    teacher_pseudo_labels = torch.argmax(teacher_output_logits, dim=1)
+                    weights = nn.CrossEntropyLoss(reduction='none')(teacher_output_logits, teacher_pseudo_labels)
+                    weights = (weights - torch.min(weights)) / (torch.max(weights) - torch.min(weights))
+                    weights = 2 * torch.sigmoid(-1 * weights)
+
                     teacher_logits = torch.mm(teacher_embeddings, class_centers_in_batch.t())
                 teaching_loss_value = args.lambd * teaching_loss_function(
                     F.log_softmax(logits[:, class_in_batch], dim=1),
                     F.softmax(teacher_logits / args.tau2, dim=1)
-                )
+                ) * weights.unsqueeze(1)
+                teaching_loss_value = torch.sum(torch.mean(teaching_loss_value, dim=0))
                 total_loss_value = training_loss_value + teaching_loss_value
             
             optimizer.zero_grad()
