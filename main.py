@@ -74,7 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_new_classes', type=int, default=0)
     parser.add_argument('--teacher_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--student_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--model_name', type=str, default='gkd', choices=['ce', 'kd', 'gkd', 'pgkd'])
+    parser.add_argument('--model_name', type=str, default='gkd', choices=['ce', 'kd', 'gkd', 'wgkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
     parser.add_argument('--flag_debug', action='store_true', default=False)
@@ -160,7 +160,7 @@ if __name__ == '__main__':
         student = torch.nn.DataParallel(student, device_ids=args.devices)
     print('===== student ready. =====')
 
-    if args.model_name == 'gkd' or args.model_name == 'pgkd':
+    if args.model_name == 'gkd' or args.model_name == 'wgkd':
         # model save path and statistics save path for stage 1
         model_save_path1 = 'saves/trained_students/' + \
                             args.data_name + '_' + 'gkd' + '_' + args.student_network_name + '_' + args.teacher_network_name + \
