@@ -19,6 +19,8 @@ from torch.distributions.categorical import Categorical
 from torchvision import models
 
 from matplotlib import pyplot as plt
+plt.rcParams['font.family'] = 'Times New Roman'
+plt.rcParams['mathtext.fontset'] = 'cm'
 
 from networks import resnet, wide_resnet, mobile_net
 
@@ -83,6 +85,116 @@ def get_instance_metric(args, train_data_loader, teacher, teacher_label_set):
     inout_path = 'saves/metrics/inout_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
     np.save(inout_path, inout_all)
 
+
+
+def draw_instance_metric(args):
+    maxlogit_path = 'saves/metrics/maxlogit_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    entropy_path = 'saves/metrics/entropy_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    pseudo_path = 'saves/metrics/pseudo_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    inout_path = 'saves/metrics/inout_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+
+    maxlogit = np.load(maxlogit_path)
+    maxlogit = (maxlogit - np.min(maxlogit)) / (np.max(maxlogit) - np.min(maxlogit))
+    entropy = np.load(entropy_path)
+    entropy = (entropy - np.min(entropy)) / (np.max(entropy) - np.min(entropy))
+    pseudo = np.load(pseudo_path)
+    pseudo = (pseudo - np.min(pseudo)) / (np.max(pseudo) - np.min(pseudo))
+    inout = np.load(inout_path)
+
+    in_indexes = np.where(inout == 1)[0]
+    out_indexes = np.where(inout == 0)[0]
+
+    # maxlogit
+    fig = plt.figure(figsize=(10, 8))
+    ax = plt.subplot(1, 1, 1)
+
+    ax.set_xlabel('maximum logit', fontsize=28)
+    ax.set_xlim(0, 1)
+    ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+    ax.set_xticklabels(ax.get_xticks(), fontdict={'fontsize': 28})
+
+    ax.set_ylabel('number of instances ($\\times 10^3$)', fontsize=28)
+    ax.set_ylim(0, 3000)
+    ax.set_yticks([0, 1000, 2000, 3000])
+    ax.set_yticklabels([0, 1, 2, 3], fontdict={'fontsize': 28})
+
+    ax.hist(maxlogit[in_indexes], bins=30, label='seen classes',
+        color='red', edgecolor='black', alpha=0.5, linewidth=2)
+    ax.hist(maxlogit[out_indexes], bins=30, label='unseen classes',
+        color='blue', edgecolor='black', alpha=0.5, linewidth=2)
+
+    ax.legend(prop={'size': 28})
+    plt.savefig('saves/metrics/figures/maxlogit_' + args.data_name + '_' + str(args.n_new_classes) + '.jpg')
+    plt.savefig('saves/metrics/figures/maxlogit_' + args.data_name + '_' + str(args.n_new_classes) + '.pdf')
+    plt.close()
+
+    # entropy
+    fig = plt.figure(figsize=(10, 8))
+    ax = plt.subplot(1, 1, 1)
+
+    ax.set_xlabel('entropy', fontsize=28)
+    ax.set_xlim(0, 1)
+    ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+    ax.set_xticklabels(ax.get_xticks(), fontdict={'fontsize': 28})
+
+    ax.set_ylabel('number of instances ($\\times 10^3$)', fontsize=28)
+    ax.set_ylim(0, 10000)
+    ax.set_yticks([0, 2000, 4000, 6000, 8000, 10000])
+    ax.set_yticklabels([0, 2, 4, 6, 8, 10], fontdict={'fontsize': 28})
+
+    ax.hist(entropy[in_indexes], bins=30, label='seen classes',
+        color='red', edgecolor='black', alpha=0.5, linewidth=2)
+    ax.hist(entropy[out_indexes], bins=30, label='unseen classes',
+        color='blue', edgecolor='black', alpha=0.5, linewidth=2)
+        
+    ax.legend(prop={'size': 28})
+    plt.savefig('saves/metrics/figures/entropy_' + args.data_name + '_' + str(args.n_new_classes) + '.jpg')
+    plt.savefig('saves/metrics/figures/entropy_' + args.data_name + '_' + str(args.n_new_classes) + '.pdf')
+    plt.close()
+
+    # pseudo
+    fig = plt.figure(figsize=(10, 8))
+    ax = plt.subplot(1, 1, 1)
+
+    ax.set_xlabel('pseudo', fontsize=28)
+    ax.set_xlim(0, 1)
+    ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+    ax.set_xticklabels(ax.get_xticks(), fontdict={'fontsize': 28})
+
+    ax.set_ylabel('number of instances ($\\times 10^3$)', fontsize=28)
+    ax.set_ylim(0, 10000)
+    ax.set_yticks([0, 2000, 4000, 6000, 8000, 10000])
+    ax.set_yticklabels([0, 2, 4, 6, 8, 10], fontdict={'fontsize': 28})
+
+    ax.hist(pseudo[in_indexes], bins=30, label='seen classes',
+        color='red', edgecolor='black', alpha=0.5, linewidth=2)
+    ax.hist(pseudo[out_indexes], bins=30, label='unseen classes',
+        color='blue', edgecolor='black', alpha=0.5, linewidth=2)
+        
+    ax.legend(prop={'size': 28})
+    plt.savefig('saves/metrics/figures/pseudo_' + args.data_name + '_' + str(args.n_new_classes) + '.jpg')
+    plt.savefig('saves/metrics/figures/pseudo_' + args.data_name + '_' + str(args.n_new_classes) + '.pdf')
+    plt.close()
+
+
+
+def test_instance_metric(args):
+    maxlogit_path = 'maxlogit_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    entropy_path = 'entropy_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    pseudo_path = 'pseudo_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+    inout_path = 'inout_' + args.data_name + '_' + str(args.n_new_classes) + '.npy'
+
+    maxlogit = np.load(maxlogit_path)
+    maxlogit = (maxlogit - np.min(maxlogit)) / (np.max(maxlogit) - np.min(maxlogit))
+    entropy = np.load(entropy_path)
+    entropy = (entropy - np.min(entropy)) / (np.max(entropy) - np.min(entropy))
+    pseudo = np.load(pseudo_path)
+    pseudo = (pseudo - np.min(pseudo)) / (np.max(pseudo) - np.min(pseudo))
+    inout = np.load(inout_path)
+
+    print(roc_auc_score(inout, maxlogit))
+    print(roc_auc_score(1 - inout, entropy))
+    print(roc_auc_score(1 - inout, pseudo))
 
 
 if __name__ == '__main__':
@@ -163,3 +275,5 @@ if __name__ == '__main__':
     print('===== teacher ready. =====')
 
     # get_instance_metric(args, train_data_loader, teacher, teacher_label_set)
+    draw_instance_metric(args)
+    # test_instance_metric(args)
