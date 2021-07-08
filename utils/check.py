@@ -106,12 +106,12 @@ if __name__ == '__main__':
     # create a parser
     parser = argparse.ArgumentParser()
     # task arguments
-    parser.add_argument('--data_name', type=str, default='CUB-200', choices=['CIFAR-100', 'CUB-200'])
-    parser.add_argument('--n_classes', type=int, default=100)
+    parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
+    parser.add_argument('--n_classes', type=int, default=50)
     parser.add_argument('--n_new_classes', type=int, default=0)
-    parser.add_argument('--teacher_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--student_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--model_name', type=str, default='gkd', choices=['ce', 'kd', 'gkd'])
+    parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--model_name', type=str, default='wgkd', choices=['ce', 'kd', 'gkd', 'wgkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
     parser.add_argument('--flag_debug', action='store_true', default=False)
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--tau1', type=float, default=4) # temperature in stage 1
     parser.add_argument('--tau2', type=float, default=1) # temperature in stage 2
-    parser.add_argument('--lambd', type=float, default=10.0) # weight of teaching loss in stage 2
+    parser.add_argument('--lambd', type=float, default=1) # weight of teaching loss in stage 2
 
     args = parser.parse_args()
 
