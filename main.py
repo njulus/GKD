@@ -79,7 +79,7 @@ if __name__ == '__main__':
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
     parser.add_argument('--flag_debug', action='store_true', default=False)
     parser.add_argument('--n_workers', type=int, default=GV.WORKERS)
-    # optimizer arguments
+    # optimizer argumentsQ
     parser.add_argument('--lr1', type=float, default=0.1)
     parser.add_argument('--lr2', type=float, default=0.1)
     parser.add_argument('--point', type=int, nargs='+', default=(50,100,150))
