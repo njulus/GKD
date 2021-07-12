@@ -95,27 +95,6 @@ def check_model_stage2(args):
 
 
 
-def check_model_generalized(args):
-    model_save_path2 = '../saves/trained_students/' + \
-                        args.data_name + '_' + args.model_name + '_' + args.student_network_name + '_' + args.teacher_network_name + \
-                        '_class=' + str(args.n_classes) + \
-                        '_newclass=' + str(args.n_new_classes) + \
-                        '_lr2=' + str(args.lr2) + \
-                        '_point=' + str(args.point) + \
-                        '_gamma=' + str(args.gamma) + \
-                        '_wd=' + str(args.wd) + \
-                        '_mo=' + str(args.mo) + \
-                        '_depth=' + str(args.depth) + \
-                        '_width=' + str(args.width) + \
-                        '_ca=' + str(args.ca) + \
-                        '_tau2=' + str(args.tau2) + \
-                        '_lambd=' + str(args.lambd) + \
-                        '.model'
-    record = torch.load(model_save_path2, map_location='cpu')
-    
-    print('===== best model in stage 2 loaded, testing acc = %f. =====' % (record['testing_accuracy']))
-
-
 if __name__ == '__main__':
     # set random seed
     random.seed(960402)
@@ -162,4 +141,5 @@ if __name__ == '__main__':
     display_args(args)
 
     # check_model_stage1(args)
-    check_model_stage2(args)
+    # check_model_stage2(args)
+    check_model_generalized(args)
