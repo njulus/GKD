@@ -116,7 +116,7 @@ if __name__ == '__main__':
     Network_Teacher = importlib.import_module('networks.' + args.teacher_network_name)
     Network_Student = importlib.import_module('networks.' + args.student_network_name)
 
-    # generate data_loader
+     # generate data_loader
     train_data_loader = Data.generate_data_loader(data_path, 'train', args.n_classes, args.n_new_classes, args.batch_size, args.n_workers)
     print('===== train data loader ready. =====')
     test_data_loader = Data.generate_data_loader(data_path, 'test', args.n_classes, args.n_new_classes, args.batch_size, args.n_workers)
