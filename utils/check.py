@@ -142,4 +142,3 @@ if __name__ == '__main__':
 
     # check_model_stage1(args)
     # check_model_stage2(args)
-    check_model_generalized(args)
