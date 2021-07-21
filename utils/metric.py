@@ -59,7 +59,7 @@ def display_args(args):
 def compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric_save_path):
     teacher_labels = []
     for _, batch in enumerate(teacher_data_loader):
-        _, _, labels = batch
+        _, _, labels, _ = batch
         labels = labels.long().numpy()
         teacher_labels += list(labels)
     teacher_labels = np.unique(np.array(teacher_labels))
@@ -67,7 +67,7 @@ def compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric
     inout = []
     weight = []
     for _, batch in enumerate(train_data_loader):
-        images, _, labels = batch
+        images, _, labels, _ = batch
         images = images.float().cuda(args.devices[0])
         labels = labels.long().numpy()
 
@@ -101,6 +101,22 @@ def compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric
 
 
 
+def get_image(args, teacher, train_data_loader, metric_save_path):
+    for _, batch in enumerate(train_data_loader):
+        images, labels, _, raw_images = batch
+        images = images.float().cuda(args.devices[0])
+        labels = labels.long().cuda(args.devices[0])
+
+        with torch.no_grad():
+            teacher_output_logits, teacher_embeddings = teacher.forward(images, flag_both=True)
+            teacher_pseudo_labels = torch.argmax(teacher_output_logits, dim=1)
+            weights = nn.CrossEntropyLoss(reduction='none')(teacher_output_logits, teacher_pseudo_labels)
+            
+
+
+        
+
+
 if __name__ == '__main__':
     # set random seed
     random.seed(960402)
@@ -114,7 +130,7 @@ if __name__ == '__main__':
     # task arguments
     parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
     parser.add_argument('--n_classes', type=int, default=50)
-    parser.add_argument('--n_new_classes', type=int, default=20)
+    parser.add_argument('--n_new_classes', type=int, default=50)
     parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--model_name', type=str, default='wgkd', choices=['ce', 'kd', 'gkd', 'wgkd'])
@@ -197,6 +213,7 @@ if __name__ == '__main__':
         teacher = None
     print('===== teacher ready. =====')
 
-    metric_save_path = '../saves/metrics/'
+    # metric_save_path = '../saves/metrics/'
+    # compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric_save_path)
 
-    compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric_save_path)
+    get_image(args, teacher, train_data_loader, metric_save_path)

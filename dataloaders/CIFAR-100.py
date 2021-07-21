@@ -35,6 +35,9 @@ class MyDataset(Dataset):
             transforms.ToTensor(),
             transforms.Normalize([0.5071, 0.4867, 0.4408], [0.2675, 0.2565, 0.2761])
         ])
+        self.transform_raw = transforms.Compose([
+            transforms.ToTensor()
+        ])
     
     def read_data(self):
         if self.flag_mode == 'train':
@@ -83,10 +86,11 @@ class MyDataset(Dataset):
             image = self.transform_augment(image)
         else:
             image = self.transform_simple(image)
+        image_raw = self.transform_raw(image)
         label = self.labels[index]
         y = self.label2y[label]
 
-        return image, y, label
+        return image, y, label, raw_image
 
     def get_n_classes(self):
         assert(len(np.unique(self.labels)) == self.n_classes)
@@ -111,6 +115,6 @@ if __name__ == '__main__':
 
     my_data_loader = generate_data_loader(data_path, flag_mode, n_classes, n_new_classes, batch_size, n_workers)
     for batch_index, batch in enumerate(my_data_loader):
-        image, label, _ = batch
+        image, label, _, _ = batch
         print(image[0, 0, ...])
         break
