@@ -14,6 +14,7 @@ import sys
 sys.path.append('..')
 
 import numpy as np
+from PIL import Image
 
 import torch
 from torch import nn
@@ -101,19 +102,42 @@ def compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric
 
 
 
-def get_image(args, teacher, train_data_loader, metric_save_path):
-    for _, batch in enumerate(train_data_loader):
-        images, labels, _, raw_images = batch
-        images = images.float().cuda(args.devices[0])
-        labels = labels.long().cuda(args.devices[0])
+def get_image(args, teacher, teacher_data_loader, train_data_loader, image_save_path):
+    # for batch_index, batch in enumerate(train_data_loader):
+    #     images, labels, _, raw_images = batch
+    #     images = images.float().cuda(args.devices[0])
+    #     labels = labels.long().cuda(args.devices[0])
+    #     raw_images = raw_images.float().cuda(args.devices[0])
 
-        with torch.no_grad():
-            teacher_output_logits, teacher_embeddings = teacher.forward(images, flag_both=True)
-            teacher_pseudo_labels = torch.argmax(teacher_output_logits, dim=1)
-            weights = nn.CrossEntropyLoss(reduction='none')(teacher_output_logits, teacher_pseudo_labels)
-            
+    #     with torch.no_grad():
+    #         teacher_output_logits, teacher_embeddings = teacher.forward(images, flag_both=True)
+    #         teacher_pseudo_labels = torch.argmax(teacher_output_logits, dim=1)
+    #         weights = nn.CrossEntropyLoss(reduction='none')(teacher_output_logits, teacher_pseudo_labels)
+    #         max_id = torch.argmax(weights)
+    #         min_id = torch.argmin(weights)
+    #         max_image = raw_images[max_id].transpose(0, 2).transpose(0, 1) * 255
+    #         min_image = raw_images[min_id].transpose(0, 2).transpose(0, 1) * 255
 
+    #     max_image = np.uint8(max_image.cpu().numpy())
+    #     max_image = Image.fromarray(max_image).convert('RGB')
+    #     min_image = np.uint8(min_image.cpu().numpy())
+    #     min_image = Image.fromarray(min_image).convert('RGB')
 
+    #     max_image.save(image_save_path + 'max/' + str(batch_index) + '.jpg')
+    #     min_image.save(image_save_path + 'min/' + str(batch_index) + '.jpg')
+    
+    for batch_index, batch in enumerate(teacher_data_loader):
+        _, _, _, raw_images = batch
+        for i in range(0, raw_images.size()[0]):
+            image = raw_images[i].transpose(0, 2).transpose(0, 1) * 255
+            image = np.uint8(image.cpu().numpy())
+            image = Image.fromarray(image).convert('RGB')
+
+            image.save(image_save_path + 'teacher/' + str(i) + '.jpg')
+    
+        break
+        
+        
         
 
 
@@ -128,11 +152,11 @@ if __name__ == '__main__':
     # create a parser
     parser = argparse.ArgumentParser()
     # task arguments
-    parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
-    parser.add_argument('--n_classes', type=int, default=50)
-    parser.add_argument('--n_new_classes', type=int, default=50)
-    parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--data_name', type=str, default='CUB-200', choices=['CIFAR-100', 'CUB-200'])
+    parser.add_argument('--n_classes', type=int, default=100)
+    parser.add_argument('--n_new_classes', type=int, default=100)
+    parser.add_argument('--teacher_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--student_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--model_name', type=str, default='wgkd', choices=['ce', 'kd', 'gkd', 'wgkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
@@ -179,7 +203,7 @@ if __name__ == '__main__':
     train_data_loader = Data.generate_data_loader(data_path, 'train', args.n_classes, args.n_new_classes, args.batch_size, args.n_workers)
     print('===== train data loader ready. =====')
     teacher_data_loader = Data.generate_data_loader(data_path, 'train', args.n_classes, 0, args.batch_size, args.n_workers)
-    print('==== teacher data loader ready. =====')
+    print('===== teacher data loader ready. =====')
 
 
     # generate teacher network
@@ -216,4 +240,5 @@ if __name__ == '__main__':
     # metric_save_path = '../saves/metrics/'
     # compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric_save_path)
 
-    get_image(args, teacher, train_data_loader, metric_save_path)
+    image_save_path = '../saves/images/'
+    get_image(args, teacher, teacher_data_loader, train_data_loader, image_save_path)

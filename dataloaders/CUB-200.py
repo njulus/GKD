@@ -81,15 +81,15 @@ class MyDataset(Dataset):
         feature = self.features[index]
         image = Image.fromarray(feature)
         # data preprocess
+        raw_image = self.transform_raw(image)
         if self.flag_mode == 'train':
-            image = self.transform_augment(image)
+            aug_image = self.transform_augment(image)
         else:
-            image = self.transform_simple(image)
-        image_raw = self.transform_raw(image)
+            aug_image = self.transform_simple(image)
         label = self.labels[index]
         y = self.label2y[label]
 
-        return image, y, label, raw_image
+        return aug_image, y, label, raw_image
 
     def get_n_classes(self):
         assert(len(np.unique(self.labels)) == self.n_classes)
