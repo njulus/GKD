@@ -71,10 +71,10 @@ if __name__ == '__main__':
     # task arguments
     parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
     parser.add_argument('--n_classes', type=int, default=50)
-    parser.add_argument('--n_new_classes', type=int, default=10)
+    parser.add_argument('--n_new_classes', type=int, default=50)
     parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--model_name', type=str, default='wgkd', choices=['ce', 'kd', 'gkd', 'wgkd'])
+    parser.add_argument('--student_network_name', type=str, default='resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--model_name', type=str, default='ce', choices=['ce', 'kd', 'gkd', 'wgkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
     parser.add_argument('--flag_debug', action='store_true', default=False)
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--ca', type=float, default=0.25)  # channel
     parser.add_argument('--dropout_rate', type=float, default=0.3)
     # training procedure arguments
-    parser.add_argument('--n_training_epochs1', type=int, default=0)
+    parser.add_argument('--n_training_epochs1', type=int, default=200)
     parser.add_argument('--n_training_epochs2', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--tau1', type=float, default=4) # temperature in stage 1
