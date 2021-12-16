@@ -152,11 +152,11 @@ if __name__ == '__main__':
     # create a parser
     parser = argparse.ArgumentParser()
     # task arguments
-    parser.add_argument('--data_name', type=str, default='CUB-200', choices=['CIFAR-100', 'CUB-200'])
-    parser.add_argument('--n_classes', type=int, default=100)
-    parser.add_argument('--n_new_classes', type=int, default=100)
-    parser.add_argument('--teacher_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
-    parser.add_argument('--student_network_name', type=str, default='mobile_net', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
+    parser.add_argument('--n_classes', type=int, default=50)
+    parser.add_argument('--n_new_classes', type=int, default=0)
+    parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
+    parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--model_name', type=str, default='wgkd', choices=['ce', 'kd', 'gkd', 'wgkd'])
     # experiment environment arguments
     parser.add_argument('--devices', type=int, nargs='+', default=GV.DEVICES)
@@ -237,8 +237,8 @@ if __name__ == '__main__':
         teacher = None
     print('===== teacher ready. =====')
 
-    # metric_save_path = '../saves/metrics/'
-    # compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric_save_path)
+    metric_save_path = '../saves/metrics/'
+    compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric_save_path)
 
-    image_save_path = '../saves/images/'
-    get_image(args, teacher, teacher_data_loader, train_data_loader, image_save_path)
+    # image_save_path = '../saves/images/'
+    # get_image(args, teacher, teacher_data_loader, train_data_loader, image_save_path)
