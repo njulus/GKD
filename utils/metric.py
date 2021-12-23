@@ -20,6 +20,8 @@ import torch
 from torch import nn
 from torchvision import models
 
+from sklearn.metrics import roc_auc_score
+
 from utils import global_variable as GV
 import os
 
@@ -138,7 +140,21 @@ def get_image(args, teacher, teacher_data_loader, train_data_loader, image_save_
         break
         
         
-        
+
+def compute_auc(args, metric_save_path):
+    inout_save_path = metric_save_path + \
+        args.data_name + '_inout' + \
+        '_newclass=' + str(args.n_new_classes) + '.npy'
+    weight_save_path = metric_save_path + \
+        args.data_name + '_weight' + \
+        '_newclass=' + str(args.n_new_classes) + '.npy'
+    
+    inout = np.load(inout_save_path)
+    weight = np.load(weight_save_path)
+
+    print(inout)
+    print(weight)
+    print(roc_auc_score(inout, weight))
 
 
 if __name__ == '__main__':
@@ -154,7 +170,7 @@ if __name__ == '__main__':
     # task arguments
     parser.add_argument('--data_name', type=str, default='CIFAR-100', choices=['CIFAR-100', 'CUB-200'])
     parser.add_argument('--n_classes', type=int, default=50)
-    parser.add_argument('--n_new_classes', type=int, default=0)
+    parser.add_argument('--n_new_classes', type=int, default=20)
     parser.add_argument('--teacher_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--student_network_name', type=str, default='wide_resnet', choices=['resnet', 'wide_resnet', 'mobile_net'])
     parser.add_argument('--model_name', type=str, default='wgkd', choices=['ce', 'kd', 'gkd', 'wgkd'])
@@ -238,7 +254,9 @@ if __name__ == '__main__':
     print('===== teacher ready. =====')
 
     metric_save_path = '../saves/metrics/'
-    compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric_save_path)
+    # compute_metric(args, teacher, teacher_data_loader, train_data_loader, metric_save_path)
+    compute_auc(args, metric_save_path)
 
     # image_save_path = '../saves/images/'
     # get_image(args, teacher, teacher_data_loader, train_data_loader, image_save_path)
+
