@@ -152,8 +152,8 @@ def compute_auc(args, metric_save_path):
     inout = np.load(inout_save_path)
     weight = np.load(weight_save_path)
 
-    print(inout)
-    print(weight)
+    # print(inout)
+    # print(weight)
     print(roc_auc_score(inout, weight))
 
 
